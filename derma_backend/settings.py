@@ -4,18 +4,33 @@ Django settings for derma_backend project.
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file if present
+load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
     'django-insecure-5xdo@by#-yblt#smz7$80ay!ko=m#lp*&%#1)xf35)&36^ta$t'
 )
 
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+# Debug mode: default to True in local development, can be set to False in .env
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*']
+# Host configuration (supports comma-separated hosts in DJANGO_ALLOWED_HOSTS)
+allowed_hosts_raw = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
+if allowed_hosts_raw:
+    ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_raw.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+        '.pythonanywhere.com',
+        '*',
+    ]
 
 # Application definition
 INSTALLED_APPS = [
@@ -71,12 +86,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'derma_backend.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database configuration: defaults to SQLite; supports MySQL (e.g. PythonAnywhere MySQL)
+if os.environ.get('DB_ENGINE') == 'mysql' or os.environ.get('USE_MYSQL', 'False').lower() in ('true', '1'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME', ''),
+            'USER': os.environ.get('DB_USER', ''),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', ''),
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+            },
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -107,6 +138,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Ensure directories exist
+STATIC_ROOT.mkdir(parents=True, exist_ok=True)
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework settings
@@ -121,14 +156,39 @@ REST_FRAMEWORK = {
     ],
 }
 
+# PythonAnywhere reverse proxy SSL detection
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # CORS configuration for Angular frontend
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True').lower() in ('true', '1', 'yes')
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
+
+default_cors_origins = [
     'http://localhost:4200',
     'http://127.0.0.1:4200',
     'http://localhost:3000',
 ]
+cors_origins_raw = os.environ.get('CORS_ALLOWED_ORIGINS', '')
+if cors_origins_raw:
+    CORS_ALLOWED_ORIGINS = default_cors_origins + [
+        origin.strip() for origin in cors_origins_raw.split(',') if origin.strip()
+    ]
+else:
+    CORS_ALLOWED_ORIGINS = default_cors_origins
+
+# CSRF Trusted Origins (Essential for Django 4.x on HTTPS domains / PythonAnywhere admin login)
+default_csrf_origins = [
+    'https://*.pythonanywhere.com',
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
+]
+csrf_origins_raw = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if csrf_origins_raw:
+    CSRF_TRUSTED_ORIGINS = default_csrf_origins + [
+        origin.strip() for origin in csrf_origins_raw.split(',') if origin.strip()
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = default_csrf_origins
 
 # Jazzmin Dashboard Theme Configuration
 JAZZMIN_SETTINGS = {

@@ -160,13 +160,13 @@ REST_FRAMEWORK = {
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CORS configuration for Angular frontend
-CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True').lower() in ('true', '1', 'yes')
+CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False').lower() in ('true', '1', 'yes')
 CORS_ALLOW_CREDENTIALS = True
 
 default_cors_origins = [
+    'https://derma-bastion.vercel.app',
     'http://localhost:4200',
     'http://127.0.0.1:4200',
-    'http://localhost:3000',
 ]
 cors_origins_raw = os.environ.get('CORS_ALLOWED_ORIGINS', '')
 if cors_origins_raw:
@@ -179,6 +179,7 @@ else:
 # CSRF Trusted Origins (Essential for Django 4.x on HTTPS domains / PythonAnywhere admin login)
 default_csrf_origins = [
     'https://*.pythonanywhere.com',
+    'https://derma-bastion.vercel.app',
     'http://localhost:4200',
     'http://127.0.0.1:4200',
 ]

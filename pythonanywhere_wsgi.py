@@ -13,8 +13,8 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# REPLACE THIS WITH YOUR PYTHONANYWHERE USERNAME:
-PA_USERNAME = 'YOUR_USERNAME'
+# PythonAnywhere username:
+PA_USERNAME = 'abdelrahman64204'
 
 # Project directory on PythonAnywhere
 PROJECT_DIR = f'/home/{PA_USERNAME}/derma-bastion-backend'
